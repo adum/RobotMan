@@ -95,6 +95,10 @@
       border: 1px solid #ced3db;
       height: 40px; }
 
+.processed {
+        font-weight: bold;
+}
+
 #colorholder {
   width: 480px;
   height: 30px;

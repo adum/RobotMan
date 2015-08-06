@@ -50,7 +50,14 @@
     var message = data.text;
 
     //CREATE ELEMENTS MESSAGE & SANITIZE TEXT
-    var messageElement = $("<li>");
+    var messageElement;
+    var li = "<li id='" + snapshot.key() + "'";
+
+    if (data.processed)
+	li += " class='processed'>";
+    li += ">";
+    messageElement = $(li);
+
     messageElement.text(message);
 
     //ADD MESSAGE
@@ -59,6 +66,15 @@
     //SCROLL TO BOTTOM OF MESSAGE LIST
     messageList[0].scrollTop = messageList[0].scrollHeight;
   });
+
+messagesRef.on('child_changed', function(snapshot, prevChildKey) {
+    var data = snapshot.val();
+    var key = snapshot.key();
+    if (data.processed) {
+	$("#" + key).toggleClass('processed');
+    }
+});
+
 </script>
 </body>
 </html>
