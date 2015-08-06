@@ -1,6 +1,12 @@
 import threading
 import sys
 import curses
+import signal, os
+
+def handler(signum, frame):
+    print 'Signal handler called with signal', signum
+
+signal.signal(signal.SIGINT, handler)
 
 class Text(threading.Thread):
 

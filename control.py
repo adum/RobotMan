@@ -8,8 +8,10 @@ import threading
 import socket
 import sys
 from text import Text
+from pprint import pprint
 
-URL = 'https://robotman.firebaseIO.com/control/.json'
+DB = 'https://robotman.firebaseIO.com/control/'
+URL = DB + '.json'
 
 class ClosableSSEClient(SSEClient):
     """
@@ -43,11 +45,16 @@ class PostThread(threading.Thread):
 
     def run(self):
         while True:
-            msg = self.outbound_queue.get()
+            post = self.outbound_queue.get()
+#            pprint(post)
+            url = DB + post['path'] + ".json"
+            msg = post['msg']
             if not msg:
                 break
             to_post = json.dumps(msg)
-            requests.post(URL, data=to_post)
+            print("posting url", url, to_post)
+            requests.patch(url, data=to_post)
+#            requests.post(url, data=to_post)
 
     def close(self):
         self.outbound_queue.put(False)
@@ -55,9 +62,14 @@ class PostThread(threading.Thread):
 
 class RemoteThread(threading.Thread):
 
-    def __init__(self, message_queue):
+    def __init__(self, message_queue, outbound_queue):
         self.message_queue = message_queue
+        self.outbound_queue = outbound_queue
         super(RemoteThread, self).__init__()
+
+    def mark_processed(self, key):
+#        self.outbound_queue.put({'path': key + "/processed/", 'msg': True})
+        self.outbound_queue.put({'path': key, 'msg': {'processed': True}})
 
     def run(self):
         try:
@@ -75,10 +87,15 @@ class RemoteThread(threading.Thread):
                         keys = data.keys()
                         keys.sort()
                         for k in keys:
-                            self.message_queue.put(data[k])
+                            if not 'processed' in data[k]:
+                                self.message_queue.put(data[k])
+                                self.mark_processed(k)
                 else:
                     # must be a push ID
                     self.message_queue.put(data)
+                    if path.count("/") == 1: # not sub path
+                        k = path.split("/")[1]
+                        self.mark_processed(k)
         except socket.error:
             pass    # this can happen when we close the stream
 
@@ -104,8 +121,14 @@ class Dispatcher():
             msg = self.inbound_queue.get()
             if not msg:
                 break
-            print 'incoming: %s' % (msg['text'])
-            text_queue.put(msg)
+            if not 'text' in msg:
+                break # some child
+#            print 'incoming: %s' % (msg['text'])
+            if 'processed' in msg:
+                print('already processed')
+            else:
+                text_queue.put(msg)
+                
 
     def close(self):
         self.inbound_queue.put(False)
@@ -119,7 +142,7 @@ if __name__ == '__main__':
 
     post_thread = PostThread(outbound_queue)
     post_thread.start()
-    remote_thread = RemoteThread(inbound_queue)
+    remote_thread = RemoteThread(inbound_queue, outbound_queue)
     remote_thread.start()
 
     disp = Dispatcher(inbound_queue, outbound_queue)
