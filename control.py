@@ -121,8 +121,10 @@ class Dispatcher():
             msg = self.inbound_queue.get()
             if not msg:
                 break
+            if not isinstance(msg, dict):
+                continue
             if not 'text' in msg:
-                break # some child
+                continue # some child
 #            print 'incoming: %s' % (msg['text'])
             if 'processed' in msg:
                 print('already processed')
@@ -145,6 +147,7 @@ if __name__ == '__main__':
     remote_thread = RemoteThread(inbound_queue, outbound_queue)
     remote_thread.start()
 
+    # grabs items from inbound, sends them to handlers
     disp = Dispatcher(inbound_queue, outbound_queue)
     disp.run()
 

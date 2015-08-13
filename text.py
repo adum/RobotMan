@@ -25,6 +25,7 @@ class Text(threading.Thread):
             if not msg:
                 continue
             print 'text: %s' % (msg['text'])
+            os.system('espeak -ven-sc -k5 -s150 "' + msg['text'] + '"')
 
     def close(self):
         self.outbound_queue.put(False)
