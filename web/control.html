@@ -20,6 +20,17 @@
   </footer>
 </div>
 
+<!-- eyes MARKUP -->
+<div class="eye-table">
+  <header>Eyes Control</header>
+
+  <table id='eye-table'><tr valign='top'></tr></table>
+
+  <footer>
+  </footer>
+</div>
+
+
 <!-- CHAT JAVACRIPT -->
 <script>
   // CREATE A REFERENCE TO FIREBASE
@@ -74,7 +85,43 @@ messagesRef.on('child_changed', function(snapshot, prevChildKey) {
 	$("#" + key).toggleClass('processed');
     }
 });
-
 </script>
+
+
+<!-- eyes JAVACRIPT -->
+<script>
+  // CREATE A REFERENCE TO FIREBASE
+  var eyesRef = new Firebase('https://robotman.firebaseIO.com/pixels/');
+
+  // REGISTER DOM ELEMENTS
+  var eyeRow = $('#eye-table tr');
+
+  // Add a callback that is triggered for each eye
+  eyesRef.limitToLast(10).on('child_added', function (snapshot) {
+    //GET DATA
+    var data = snapshot.val();
+
+    //CREATE ELEMENTS
+    var el;
+    var li = "<td id='" + snapshot.key() + "'" + ">";
+    el = $(li);
+
+    var s = "";
+    for (var i = 0; i < data.length; i++) {
+	if (i % 8 == 0)
+	    s += "\n";
+	if (data[i] == "0")
+	    s += " ";
+	else
+	    s += "&#9608;"
+    }
+
+    el.html("<pre>" + snapshot.key() + "\n" + s + "</pre>");
+
+    //ADD to list
+    eyeRow.append(el)
+  });
+</script>
+
 </body>
 </html>
