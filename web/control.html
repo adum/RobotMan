@@ -22,7 +22,7 @@
 
 <!-- eyes MARKUP -->
 <div class="eye-table">
-  <header>Eyes Control</header>
+  <header>Eyes Control: <span id='cur-eye'/></header>
 
   <table id='eye-table'><tr valign='top'></tr></table>
 
@@ -92,6 +92,7 @@ messagesRef.on('child_changed', function(snapshot, prevChildKey) {
 <script>
   // CREATE A REFERENCE TO FIREBASE
   var eyesRef = new Firebase('https://robotman.firebaseIO.com/pixels/');
+  var curEyeRef = new Firebase('https://robotman.firebaseIO.com/state/eye');
 
   // REGISTER DOM ELEMENTS
   var eyeRow = $('#eye-table tr');
@@ -116,10 +117,20 @@ messagesRef.on('child_changed', function(snapshot, prevChildKey) {
 	    s += "&#9608;"
     }
 
-    el.html("<pre>" + snapshot.key() + "\n" + s + "</pre>");
+    var lnk = "<a href='#' id='set_eye_" + snapshot.key() + "'>" + snapshot.key() + "</a>";
+    el.html(lnk + "<br><pre>" + s + "</pre>");
 
     //ADD to list
-    eyeRow.append(el)
+    eyeRow.append(el);
+
+    $('#set_eye_' + snapshot.key()).click(function() {
+	curEyeRef.set(snapshot.key());
+    });
+  });
+
+  var curEyeEl = $('#cur-eye');
+  curEyeRef.on('value', function (snapshot) {
+      curEyeEl.text(snapshot.val());
   });
 </script>
 
