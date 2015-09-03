@@ -7,10 +7,13 @@ import json
 import threading
 import socket
 import sys
+import time
 from text import Text
 from pprint import pprint
+from led.eyes import EyeChanger
 
-DB = 'https://robotman.firebaseIO.com/control/'
+BASE_DB = 'https://robotman.firebaseIO.com/'
+DB = BASE_DB + 'control/'
 URL = DB + '.json'
 
 class ClosableSSEClient(SSEClient):
@@ -137,8 +140,44 @@ class Dispatcher():
         self.outbound_queue.put(False)
 #        self.display_thread.join()
 
+def loadEyes():
+    eye_changer = EyeChanger()
+    try:
+        url = BASE_DB + "pixels/.json"
+
+        sse = SSEClient(url)
+        for msg in sse:
+#            print("data: " + str(len(msg.data)) + msg.data)
+#            if len(msg.data) == 0:
+#                continue
+            msg_data = json.loads(msg.data)
+            if msg_data is None:
+                break
+            path = msg_data['path']
+            data = msg_data['data']
+            print "pix json:", data
+            for k, v in data.iteritems():
+                print k, v
+                eye_changer.eye_data(k, v)
+            eye_changer.show_eye("eye")
+            time.sleep(1.5)
+            eye_changer.show_eye("eye_mid")
+            time.sleep(1.5)
+            eye_changer.show_eye("eye_shut")
+            time.sleep(1.5)
+            break
+    except socket.error:
+        pass    # this can happen when we close the stream
+#    sse.close()
+
 if __name__ == '__main__':
     args = sys.argv
+
+    loadEyes()
+    quit()
+
+    print "starting threads"
+
     outbound_queue = Queue()
     inbound_queue = Queue()
 
